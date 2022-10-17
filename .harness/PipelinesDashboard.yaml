@@ -40,6 +40,69 @@ pipeline:
                       spec:
                         branch: master
     - stage:
+        name: deploy
+        identifier: deploy
+        description: ""
+        type: Deployment
+        spec:
+          serviceConfig:
+            serviceRef: Service_1
+            serviceDefinition:
+              spec:
+                variables: []
+                manifests:
+                  - manifest:
+                      identifier: manifestdashboard
+                      type: K8sManifest
+                      spec:
+                        store:
+                          type: Github
+                          spec:
+                            connectorRef: GithubConnectorMN
+                            gitFetchType: Branch
+                            paths:
+                              - charts
+                            repoName: dashboard
+                            branch: master
+                        valuesPaths:
+                          - charts/helm-chart/kubernetes-dashboard/values.yaml
+                        skipResourceVersioning: false
+              type: Kubernetes
+          execution:
+            steps:
+              - step:
+                  name: Rollout Deployment
+                  identifier: rolloutDeployment
+                  type: K8sRollingDeploy
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false
+                    pruningEnabled: false
+            rollbackSteps:
+              - step:
+                  name: Rollback Rollout Deployment
+                  identifier: rollbackRolloutDeployment
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec:
+                    pruningEnabled: false
+          infrastructure:
+            environmentRef: Devlopement_environment
+            infrastructureDefinition:
+              type: KubernetesDirect
+              spec:
+                connectorRef: harnessnadeem
+                namespace: harness-delegate-ng
+                releaseName: release-<+INFRA_KEY>
+            allowSimultaneousDeployments: false
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+    - stage:
         name: jira approve
         identifier: jira_approve
         description: ""
