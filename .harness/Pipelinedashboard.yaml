@@ -1,0 +1,41 @@
+pipeline:
+  name: Pipelinedashboard
+  identifier: Pipelinedashboard
+  projectIdentifier: SampleProject
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: GithubConnectorMN
+        repoName: dashboard
+        build: <+input>
+  stages:
+    - stage:
+        name: build
+        identifier: build
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: harnessnadeem
+              namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Windows
+          execution:
+            steps:
+              - step:
+                  type: GitClone
+                  name: GitClone
+                  identifier: GitClone
+                  spec:
+                    connectorRef: GithubConnectorMN
+                    repoName: dashboard
+                    build:
+                      type: branch
+                      spec:
+                        branch: master
